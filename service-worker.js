@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cooking-manager-v1';
+const CACHE_NAME = 'cooking-manager-v2';
 const APP_ASSETS = [
   './',
   './index.html',
