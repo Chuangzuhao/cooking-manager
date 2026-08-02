@@ -1,0 +1,19 @@
+{
+  "name": "料理管理系統",
+  "short_name": "料理管理",
+  "description": "可用 JSON 匯入匯出的料理、食材與套餐規劃工具。",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ec",
+  "theme_color": "#315c48",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

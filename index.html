@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#315c48">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="料理管理">
+    <title>料理管理系統</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">料</span>
+          <div>
+            <h1>料理管理系統</h1>
+            <p id="updatedAt">尚未載入</p>
+          </div>
+        </div>
+        <nav class="tabs" aria-label="主要功能">
+          <button class="tab is-active" data-tab="dishes" type="button">料理管理</button>
+          <button class="tab" data-tab="ingredients" type="button">食材庫</button>
+          <button class="tab" data-tab="recommendations" type="button">食譜推薦</button>
+          <button class="tab" data-tab="json" type="button">JSON</button>
+        </nav>
+        <div class="stats" id="stats"></div>
+      </aside>
+
+      <main class="workspace">
+        <section class="panel is-active" id="panel-dishes">
+          <div class="section-head">
+            <div>
+              <h2>料理管理</h2>
+              <p>新增料理時會先比對食材庫，避免錯別字和重複食材。</p>
+            </div>
+          </div>
+
+          <form class="tool-form" id="dishForm">
+            <label>
+              料理名稱
+              <input id="dishName" name="dishName" placeholder="例如：炒蛋" required>
+            </label>
+            <label>
+              基準人數
+              <input id="dishServings" min="1" max="50" type="number" value="1" required>
+            </label>
+            <div class="form-field wide">
+              <span>料理角色</span>
+              <div class="unit-checks" id="dishRoles"></div>
+            </div>
+            <div class="ingredient-lines" id="ingredientLines"></div>
+            <div class="form-actions">
+              <button class="secondary" id="addLine" type="button">新增食材列</button>
+              <button id="saveDishButton" type="submit">儲存料理</button>
+              <button class="secondary is-hidden" id="cancelDishEdit" type="button">取消調整</button>
+            </div>
+          </form>
+
+          <label class="search-box">
+            關鍵字搜尋
+            <input id="dishSearch" placeholder="搜尋料理或食材，例如：蛋、香菇">
+          </label>
+
+          <div class="list-grid" id="dishList"></div>
+        </section>
+
+        <section class="panel" id="panel-ingredients">
+          <div class="section-head">
+            <div>
+              <h2>食材庫</h2>
+              <p>維護食材名稱、別名、預設單位，後續料理和推薦都會共用。</p>
+            </div>
+          </div>
+
+          <form class="tool-form compact-form" id="ingredientForm">
+            <label>
+              食材名稱
+              <input id="ingredientName" placeholder="例如：雞蛋" required>
+            </label>
+            <label>
+              別名
+              <input id="ingredientAliases" placeholder="例如：蛋、雞卵">
+            </label>
+            <label>
+              分類
+              <select id="ingredientCategory"></select>
+            </label>
+            <label class="is-hidden" id="customCategoryWrap">
+              新分類
+              <input id="customCategory" placeholder="例如：烘焙材料">
+            </label>
+            <label>
+              預設單位
+              <select id="ingredientUnit"></select>
+            </label>
+            <div class="form-field wide">
+              <span>可用單位</span>
+              <div class="unit-checks" id="ingredientUnits"></div>
+            </div>
+            <label>
+              縮放類型
+              <select id="ingredientScaleType"></select>
+            </label>
+            <div class="form-actions">
+              <button id="saveIngredientButton" type="submit">新增食材</button>
+              <button class="secondary is-hidden" id="cancelIngredientEdit" type="button">取消調整</button>
+            </div>
+          </form>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>食材</th>
+                  <th>別名</th>
+                  <th>分類</th>
+                  <th>單位</th>
+                  <th>可用單位</th>
+                  <th>縮放</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ingredientTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-recommendations">
+          <div class="section-head">
+            <div>
+              <h2>食譜推薦</h2>
+              <p>第一版先保留 AI 串接資料格式，使用本地模擬推薦驗證流程。</p>
+            </div>
+          </div>
+
+          <form class="tool-form compact-form" id="recommendationForm">
+            <label>
+              規劃天數
+              <input id="planDays" min="1" max="14" type="number" value="3">
+            </label>
+            <label>
+              人數
+              <input id="planPeople" min="1" max="50" type="number" value="1">
+            </label>
+            <label>
+              套餐模板
+              <select id="mealTemplate"></select>
+            </label>
+            <fieldset>
+              <legend>餐別</legend>
+              <label class="check"><input name="meal" type="checkbox" value="早餐"> 早餐</label>
+              <label class="check"><input name="meal" type="checkbox" value="午餐" checked> 午餐</label>
+              <label class="check"><input name="meal" type="checkbox" value="晚餐" checked> 晚餐</label>
+            </fieldset>
+            <label class="wide">
+              參數
+              <input id="preferences" placeholder="例如：清爽、少油、便當友善">
+            </label>
+            <div class="form-actions">
+              <button type="submit">產生推薦</button>
+            </div>
+          </form>
+
+          <div class="recommendation-output" id="recommendationOutput"></div>
+        </section>
+
+        <section class="panel" id="panel-json">
+          <div class="section-head">
+            <div>
+              <h2>JSON 匯入匯出</h2>
+              <p>跨裝置時可匯出 JSON，於另一台裝置貼上或選檔匯入。</p>
+            </div>
+          </div>
+
+          <div class="json-actions">
+            <button id="exportJson" type="button">更新下方 JSON</button>
+            <button class="secondary" id="downloadJson" type="button">下載 JSON</button>
+            <label class="file-button">
+              選擇 JSON
+              <input id="jsonFile" accept="application/json,.json" type="file">
+            </label>
+            <button class="danger" id="resetData" type="button">重設範例資料</button>
+          </div>
+          <textarea id="jsonText" spellcheck="false"></textarea>
+          <div class="form-actions">
+            <button id="importJson" type="button">從文字匯入</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.bundle.js"></script>
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        navigator.serviceWorker.register('./service-worker.js');
+      }
+    </script>
+  </body>
+</html>
