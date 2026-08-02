@@ -299,8 +299,13 @@ h1 {
 .icon-button {
   align-items: center;
   aspect-ratio: 1;
+  block-size: 40px;
   display: grid;
+  inline-size: 40px;
+  max-block-size: 40px;
+  max-inline-size: 40px;
   min-height: 40px;
+  min-width: 40px;
   padding: 0;
   place-items: center;
 }
