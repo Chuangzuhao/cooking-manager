@@ -536,6 +536,35 @@ tr:last-child td {
   gap: 8px;
 }
 
+.dish-title-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.quantity-stepper {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.quantity-stepper span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  min-width: 38px;
+  text-align: center;
+}
+
+.step-button {
+  block-size: 32px;
+  inline-size: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
 .shopping-list {
   background: var(--panel);
   border: 1px solid var(--line);

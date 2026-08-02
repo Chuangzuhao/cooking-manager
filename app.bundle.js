@@ -409,12 +409,13 @@ function summarizePlanIngredients(recommendation) {
     for (const meal of day.meals ?? []) {
       for (const slot of meal.slots ?? []) {
         for (const dish of slot.selectedDishes ?? []) {
+          const planQuantity = clampInteger(dish.planQuantity, 1, 20, 1);
           for (const item of dish.items ?? []) {
             const ingredientName = String(item.ingredientName ?? '未知食材');
             const unit = String(item.unit ?? '份');
             const key = `${ingredientName}\u0000${unit}`;
             const current = totals.get(key) ?? { ingredientName, unit, quantity: 0 };
-            current.quantity = roundQuantity(current.quantity + Number(item.quantity || 0));
+            current.quantity = roundQuantity(current.quantity + Number(item.quantity || 0) * planQuantity);
             totals.set(key, current);
           }
         }
@@ -1143,6 +1144,10 @@ function renderRecommendation(recommendation) {
     select.addEventListener('change', handlePlanDishChange);
   });
 
+  elements.recommendationOutput.querySelectorAll('[data-plan-quantity]').forEach((button) => {
+    button.addEventListener('click', handlePlanQuantityChange);
+  });
+
   elements.recommendationOutput.querySelectorAll('[data-add-suggestion]').forEach((button) => {
     button.addEventListener('click', () => {
       const dish = lastRecommendation.internetSuggestions[Number(button.dataset.addSuggestion)];
@@ -1161,7 +1166,7 @@ function renderRecommendation(recommendation) {
 function slotTemplate(slot, dayIndex, mealIndex, slotIndex) {
   const choices = Array.from({ length: slot.max }, (_, dishIndex) => {
     const selectedDish = slot.selectedDishes[dishIndex];
-    const dishDetail = selectedDish ? selectedDishTemplate(selectedDish) : '<p class="muted">可留空或改選料理。</p>';
+    const dishDetail = selectedDish ? selectedDishTemplate(selectedDish, dayIndex, mealIndex, slotIndex, dishIndex) : '<p class="muted">可留空或改選料理。</p>';
 
     return `
       <div class="slot-choice">
@@ -1194,15 +1199,55 @@ function slotTemplate(slot, dayIndex, mealIndex, slotIndex) {
   `;
 }
 
-function selectedDishTemplate(dish) {
+function selectedDishTemplate(dish, dayIndex, mealIndex, slotIndex, dishIndex) {
+  const quantity = planDishQuantity(dish);
+
   return `
     <div class="slot-dish">
-      <strong>${escapeHtml(dish.name)}</strong>
+      <div class="dish-title-row">
+        <strong>${escapeHtml(dish.name)}</strong>
+        <div class="quantity-stepper" aria-label="${escapeHtml(dish.name)} 份數">
+          <button
+            class="secondary step-button"
+            data-plan-quantity
+            data-quantity-delta="-1"
+            data-day-index="${dayIndex}"
+            data-meal-index="${mealIndex}"
+            data-slot-index="${slotIndex}"
+            data-dish-index="${dishIndex}"
+            type="button"
+            ${quantity <= 1 ? 'disabled' : ''}
+          >-</button>
+          <span>${quantity} 份</span>
+          <button
+            class="secondary step-button"
+            data-plan-quantity
+            data-quantity-delta="1"
+            data-day-index="${dayIndex}"
+            data-meal-index="${mealIndex}"
+            data-slot-index="${slotIndex}"
+            data-dish-index="${dishIndex}"
+            type="button"
+            ${quantity >= 20 ? 'disabled' : ''}
+          >+</button>
+        </div>
+      </div>
       <div class="tag-list">
-        ${dish.items.map((item) => `<span class="tag">${escapeHtml(item.ingredientName)} ${item.quantity}${escapeHtml(item.unit)}</span>`).join('')}
+        ${dish.items.map((item) => `<span class="tag">${escapeHtml(item.ingredientName)} ${planItemQuantity(item.quantity, quantity)}${escapeHtml(item.unit)}</span>`).join('')}
       </div>
     </div>
   `;
+}
+
+function planDishQuantity(dish) {
+  const quantity = Number(dish?.planQuantity ?? 1);
+  if (!Number.isFinite(quantity)) return 1;
+  return Math.max(1, Math.min(20, Math.round(quantity)));
+}
+
+function planItemQuantity(quantity, multiplier) {
+  const value = Number(quantity || 0) * multiplier;
+  return Math.round(value * 100) / 100;
 }
 
 function dishOptionsForRole(role, selectedDishId) {
@@ -1226,9 +1271,35 @@ function handlePlanDishChange(event) {
   const dishIndex = Number(select.dataset.dishIndex);
   const selectedDish = select.value ? state.dishes.find((dish) => dish.id === select.value) : null;
   const nextDishes = [...slot.selectedDishes];
-  nextDishes[dishIndex] = selectedDish ? dishToDisplay(scaleDishForPeople(selectedDish, state.ingredients, lastRecommendation.people), state.ingredients) : null;
+  const currentQuantity = planDishQuantity(nextDishes[dishIndex]);
+  nextDishes[dishIndex] = selectedDish
+    ? {
+        ...dishToDisplay(scaleDishForPeople(selectedDish, state.ingredients, lastRecommendation.people), state.ingredients),
+        planQuantity: currentQuantity,
+      }
+    : null;
   slot.selectedDishes = nextDishes.filter(Boolean);
   slot.missingCount = Math.max(0, slot.min - slot.selectedDishes.length);
+
+  renderRecommendation(lastRecommendation);
+}
+
+function handlePlanQuantityChange(event) {
+  if (!lastRecommendation) return;
+
+  const button = event.currentTarget;
+  const day = lastRecommendation.days[Number(button.dataset.dayIndex)];
+  const meal = day?.meals?.[Number(button.dataset.mealIndex)];
+  const slot = meal?.slots?.[Number(button.dataset.slotIndex)];
+  const dishIndex = Number(button.dataset.dishIndex);
+  const dish = slot?.selectedDishes?.[dishIndex];
+  if (!dish) return;
+
+  const delta = Number(button.dataset.quantityDelta || 0);
+  slot.selectedDishes[dishIndex] = {
+    ...dish,
+    planQuantity: Math.max(1, Math.min(20, planDishQuantity(dish) + delta)),
+  };
 
   renderRecommendation(lastRecommendation);
 }

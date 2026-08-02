@@ -409,12 +409,13 @@ export function summarizePlanIngredients(recommendation) {
     for (const meal of day.meals ?? []) {
       for (const slot of meal.slots ?? []) {
         for (const dish of slot.selectedDishes ?? []) {
+          const planQuantity = clampInteger(dish.planQuantity, 1, 20, 1);
           for (const item of dish.items ?? []) {
             const ingredientName = String(item.ingredientName ?? '未知食材');
             const unit = String(item.unit ?? '份');
             const key = `${ingredientName}\u0000${unit}`;
             const current = totals.get(key) ?? { ingredientName, unit, quantity: 0 };
-            current.quantity = roundQuantity(current.quantity + Number(item.quantity || 0));
+            current.quantity = roundQuantity(current.quantity + Number(item.quantity || 0) * planQuantity);
             totals.set(key, current);
           }
         }
