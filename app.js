@@ -217,7 +217,7 @@ function renderIngredients() {
           <td>${escapeHtml(scaleTypeLabel(ingredient.scaleType))}</td>
           <td>
             <button class="secondary" data-edit-ingredient="${escapeHtml(ingredient.id)}" type="button">編輯</button>
-            <button class="danger" data-remove-ingredient="${escapeHtml(ingredient.id)}" type="button" ${usedCount > 0 ? 'disabled' : ''}>
+            <button class="danger" data-remove-ingredient="${escapeHtml(ingredient.id)}" data-used-count="${usedCount}" type="button">
               刪除
             </button>
           </td>
@@ -232,6 +232,12 @@ function renderIngredients() {
 
   elements.ingredientTable.querySelectorAll('[data-remove-ingredient]').forEach((button) => {
     button.addEventListener('click', () => {
+      const usedCount = Number(button.dataset.usedCount || 0);
+      const confirmMessage = usedCount > 0
+        ? `此食材已被 ${usedCount} 道料理使用，刪除後會同步從那些料理移除。確定刪除？`
+        : '確定要刪除這個食材？';
+      if (!window.confirm(confirmMessage)) return;
+
       try {
         state = removeIngredient(state, button.dataset.removeIngredient);
         render();

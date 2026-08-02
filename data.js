@@ -306,11 +306,11 @@ export function removeDish(state, dishId) {
 
 export function removeIngredient(state, ingredientId) {
   const next = cloneState(state);
-  const isUsed = next.dishes.some((dish) => dish.items.some((item) => item.ingredientId === ingredientId));
-  if (isUsed) {
-    throw new Error('此食材已被料理使用，請先移除相關料理');
-  }
   next.ingredients = next.ingredients.filter((ingredient) => ingredient.id !== ingredientId);
+  next.dishes = next.dishes.map((dish) => ({
+    ...dish,
+    items: dish.items.filter((item) => item.ingredientId !== ingredientId),
+  }));
   return touch(next);
 }
 
